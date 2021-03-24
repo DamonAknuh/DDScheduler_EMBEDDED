@@ -1,23 +1,30 @@
 /*
- * dd_api.h
+ * dds_api.h
  *
- *  Created on: Mar 23, 2021
+ *  Created on: Mar 24, 2021
  *      Author: damonaknuh
  */
 
-#ifndef SRC_DD_SCHEDULER_DD_API_H_
-#define SRC_DD_SCHEDULER_DD_API_H_
+#ifndef DDS_DDS_API_H_
+#define DDS_DDS_API_H_
 
-#include "dd_scheduler.h"
+#include "sys_project.h"
+
+typedef enum
+{
+    PERIODIC = 0,
+    APERIODIC,
+    UNKNOWN,
+} dds_TaskType_e;
+
+#define ddsSUCCESS     (1)
+#define ddsFAILURE     (0)
 
 /**********************************************************************
 ** ____ _  _ _  _ ____ ___ _ ____ _  _ ____
 ** |___ |  | |\ | |     |  | |  | |\ | [__
 ** |    |__| | \| |___  |  | |__| | \| ___]
 ***********************************************************************/
-
-#define ddsSUCCESS (1)
-#define ddsFAILURE (0)
 
 /**************************************************************************************
 * DESC: This function Initializes the Deadline Driven Scheduler
@@ -30,13 +37,13 @@ uint32_t DDS_Init();
 *       the release time and completion time). The struct is packaged as a message and sent to a queue
 *       for the DDS to receive.
 */
-uint32_t DDS_CreateTask(TaskHandle_t    taskHandle,
+uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
                         dds_TaskType_e  taskType,
                         uint32_t        taskId,
                         uint32_t        deadline);
 
 /**************************************************************************************
-* DESC: This function receives all of the information necessary to delete a dd_task 
+* DESC: This function receives all of the information necessary to delete a dd_task
 * RETURNS: ddsSUCCESS: if function successfull, otherwise ddsFAILURE
 */
 uint32_t DDS_DeleteTask(uint32_t taskId);
@@ -75,5 +82,4 @@ uint32_t DDS_GetOverdueTasks();
 
 
 
-
-#endif /* SRC_DD_SCHEDULER_DD_API_H_ */
+#endif /* DDS_DDS_API_H_ */

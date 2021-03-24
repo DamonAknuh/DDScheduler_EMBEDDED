@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "dd_sched.h": "c",
+        "sys_project.h": "c",
+        "event_groups.h": "c"
+    }
+}

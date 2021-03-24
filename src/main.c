@@ -3,18 +3,16 @@
 */
 
 #include "sys_project.h"
-#include "dd_api.h"
-
+#include "dds/dds_api.h"
 
 /*-----------------------------------------------------------*/
 
 int main(void)
 {
+    NVIC_SetPriorityGrouping(0);
 
     DDS_Init();
 
-
-    // START TEST BED
 
     /* Start the tasks and timer running. */
     printf("~~~ PROGRAM START ~~~\n");
@@ -25,7 +23,6 @@ int main(void)
     printf("WARNING!! Main Exiting...\n");
     return 0;
 }
-
 
 
 /*-----------------------------------------------------------*/
