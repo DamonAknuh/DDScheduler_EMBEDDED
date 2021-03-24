@@ -86,17 +86,24 @@ extern xQueueHandle     xQ_DDSCommandQ;
 // |  \ |  \ [__     |    |  | |\ |  |  |___  \/   |  
 // |__/ |__/ ___]    |___ |__| | \|  |  |___ _/\_  |  
 /**********************************************************************/
+typedef enum
+{
+    UNACTIVE = 0,
+    READY,
+    COMPLETED,
+    OVERDUE,
+} dds_TaskStates_e;
 
 typedef struct dds_TaskHandle_s
 {
     uint32_t         ID;
     TaskHandle_t     tHandle;
-    dds_TaskType_e   Type;
     uint32_t         RTime;
     uint32_t         CTime;
     uint32_t         deadline;
     xTimerHandle     TIMHandle;
-    uint32_t         active;
+    dds_TaskType_e   type;
+    dds_TaskStates_e tState;
 
     struct dds_TaskHandle_s * next;
 } dds_TaskHandle_t;
@@ -109,5 +116,6 @@ typedef struct dds_TaskHandle_s
 
 void _DDS_Scheduler(void *pvParameters);
 void _DDS_Monitor(void *pvParameters);
+void  TIM_DDS_Period_cb(xTimerHandle xTimer);
 
 #endif /* SRC_dds_SCHEDULER_dds_SCHEDULER_H_ */

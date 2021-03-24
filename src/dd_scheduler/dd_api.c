@@ -154,9 +154,17 @@ uint32_t DDS_CompleteTask(uint32_t taskId)
 *        DDS. Once a response is received from the DDS, the function returns the list.
 * RETURNS: ddsSUCCESS:if function successfull, otherwise ddsFAILURE
 */
-uint32_t DDS_GetActiveTasks()
+uint32_t DDS_GetActiveTasks(void ** listHead)
 {
     uint32_t result = ddsSUCCESS;
+    dds_Message_t   msg;
+
+    _DDS_InitializeMsg(&msg, &taskId, DDCMD_GET_ACTIVE);
+
+    // ==> Send and wait for a response from the DDS
+    result = _DDS_SendAndWait(&msg);
+    
+    listHead = msg.pPayload;
 
     return ddsSUCCESS;
 }
@@ -169,6 +177,11 @@ uint32_t DDS_GetActiveTasks()
 uint32_t DDS_GetCompletedTasks()
 {
     uint32_t result = ddsSUCCESS;
+    dds_Message_t   msg;
+
+    _DDS_InitializeMsg(&msg, &taskId, DDCMD_GET_COMPL);
+
+    listHead = msg.pPayload;
 
     return ddsSUCCESS;
 }
@@ -182,6 +195,11 @@ uint32_t DDS_GetCompletedTasks()
 uint32_t DDS_GetOverdueTasks()
 {
     uint32_t result = ddsSUCCESS;
+    dds_Message_t   msg;
+
+    _DDS_InitializeMsg(&msg, &taskId, DDCMD_GET_OVERDUE);
+
+    listHead = msg.pPayload;
 
     return ddsSUCCESS;
 }

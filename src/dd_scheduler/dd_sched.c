@@ -23,6 +23,10 @@ dds_TaskHandle_t * dds_DeadTaskList;
 
 static void _DDS_HandleMSG();
 static void _DDS_CalculateSchedule();
+static uint32_t _DDS_InitializeTaskNode(uint32_t taskId,
+                                    TaskHandle_t taskHandle,
+                                    dds_CommandType_e taskType,
+                                    uint32_t deadline);
 
 void _DDS_Scheduler(void *pvParameters)
 {
@@ -57,24 +61,23 @@ void _DDS_HandleMSG()
     dds_Message_t     rXMessage; 
     dds_CommandType_e rXCommandID;
 
-    if ( pdPass == xQueueReceive(xQ_DDSCommandQ,
+    if (pdPass == xQueueReceive(xQ_DDSCommandQ,
                                 &(rXMessage), 
                                 NO_WAIT)) 
     {
         rXCommandID = rXMessage.dds_CID;
 
+        DBG_printf("==> RCVD DDS MSG %d", rXCommandID);
         if (rXCommandID == DDCMD_CREATE)
         {
             dataPayload = rXMessage.pPayload; 
 
-            /**
             _DDS_InitializeTaskNode(dataPayload.taskId,
                                     dataPayload.taskHandle,
                                     dataPayload.taskType,
                                     dataPayload.deadline);
 
             _DDS_AddTaskToActiveList(dataPayload.taskId);
-            **/
 
             // ==> Set the event bits to signal that aysnch. call has finished
             xEventGroupSetBits(rXMessage.xReturnEvt, ddsSUCCESS);
@@ -136,9 +139,51 @@ void _DDS_HandleMSG()
     }
 }
 
-void _DDS_CalculateSchedule()
+void _DDS_InitializeTaskNode(uint32_t taskId,
+                            TaskHandle_t taskHandle,
+                            dds_CommandType_e taskType,
+                            uint32_t deadline)
+{
+    if (taskId <= MAX_DDS_TASKS && dds_TaskList[taskId].tState == UNACTIVE)
+    {
+        dds_TaskList[taskId].ID      = taskId;
+        
+        dds_TaskList[taskId].deadline= deadline;
+        dds_TaskList[taskId].type    = taskType;
+        dds_TaskList[taskId].next    = NULL;
+        dds_TaskList[taskId].RTime   = 0;
+        dds_TaskList[taskId].CTime   = 0;
+        dds_TaskList[taskId].tHandle = taskHandle;
+        // dds_TaskList[taskId].tHandle = xTaskCreate( )
+        dds_TaskList[taskId].TIMHandle  = xTimerCreate("TASKTIMER", 
+                                                pdMS_TO_TICKS(deadline), 
+                                                (taskType == PERIODIC), 
+                                                (void *) taskId, 
+                                                TIM_DDS_Period_cb);
+    }
+    else
+    {
+        assert(0);
+    }
+}
+
+void TIM_DDS_Period_cb(xTimerHandle xTimer)
 {
 
+
+}
+
+
+void _DDS_CalculateSchedule()
+{
+    DBG_printf("==> Entered Func Calculate Schedule");
+
+    // TODO:
+    // --> Sorting task algorithm
+    // --> Generation
+    // --> Linked List shizznut
+    // --> DDS monitor
+    // --> Heap 4. 
 
 }
 
