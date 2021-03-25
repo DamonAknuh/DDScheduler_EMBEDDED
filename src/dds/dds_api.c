@@ -8,6 +8,9 @@
 #include "sys_project.h"
 #include "dds_api.h"
 #include "dds_private.h"
+#if DDS_TESTING
+#include "testing/dds_testing.h"
+#endif // DDS_TESTING
 
 /**************************************************************************************
 * DESC: This function initializes the message header used to communicate with
@@ -81,7 +84,7 @@ uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
     dds_Message_t   msg;
     dds_CreateMsg_t msgData;
     msgData.deadline    = deadline;
-    msgData.taskFunc      = taskFunc;
+    msgData.taskFunc    = taskFunc;
     msgData.taskType    = taskType;
     msgData.taskId      = taskId;
 
@@ -237,7 +240,7 @@ uint32_t DDS_Init()
     TIM2_InitStructure.TIM_CounterMode          = TIM_CounterMode_Up;
     TIM2_InitStructure.TIM_Period               = 0xFFFFFFFF;
    
-    TIM_TimeBaseInit(DDS_STM_TIMER, &TIM6_InitStructure);
+    TIM_TimeBaseInit(DDS_STM_TIMER, &TIM2_InitStructure);
 
     TIM_Cmd(DDS_STM_TIMER, ENABLE);
 
@@ -261,9 +264,19 @@ uint32_t DDS_Init()
                 "_DDS_Monitor",
                 configMINIMAL_STACK_SIZE,
                 NULL,
-                DDS_MON_PR - 1,
+                DDS_MON_PR,
                 NULL);
 #endif // DD_ENABLE_MONITOR
+
+#if DDS_TESTING
+    DBG_LINE("API: DDS Testing Enabled\n");
+    xTaskCreate(_DDS_TBTaskGenerator,
+                "_DDS_TBGen",
+                configMINIMAL_STACK_SIZE,
+                NULL,
+				DDS_MON_PR,
+                NULL);
+#endif // DDS_TESTING
 
     return ddsSUCCESS;
 }
