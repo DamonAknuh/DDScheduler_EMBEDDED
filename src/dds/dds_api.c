@@ -42,7 +42,7 @@ uint32_t _DDS_SendAndWait(dds_Message_t *  pMsg)
         // ==> Signal to the DDS scheduler that there is a message waiting
         xEventGroupSetBits(xEVT_DDScheduler, DDS_MESSAGE);
 
-        //DBG_TRACE_VALUE("==> Event Return %d\n", (uint32_t) pMsg->xReturnEvt);
+        //DBG_VALUE("==> Event Return %d\n", (uint32_t) pMsg->xReturnEvt);
         // ==> Wait for the DDS scheduler to respond to the message
         if (ddsFAILURE == xEventGroupWaitBits(pMsg->xReturnEvt,
                             ddsSUCCESS,
@@ -77,7 +77,7 @@ uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
                         uint32_t        taskId,
                         uint32_t        deadline)
 {
-    DBG_TRACE_VALUE("API: Creating Task %d\n", taskId);
+    DBG_VALUE("API: Creating Task %d\n", taskId);
 
     uint32_t result     = ddsSUCCESS;
 
@@ -103,7 +103,7 @@ uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
 */
 uint32_t DDS_DeleteTask(uint32_t taskId)
 {
-    DBG_TRACE_VALUE("CLI: Deleting Task: %d\n", taskId);
+    DBG_VALUE("CLI: Deleting Task: %d\n", taskId);
 
     uint32_t      result = ddsSUCCESS;
     dds_Message_t msg;
@@ -126,7 +126,7 @@ uint32_t DDS_DeleteTask(uint32_t taskId)
 */
 uint32_t DDS_ReleaseTask(uint32_t taskId)
 {
-    DBG_TRACE_VALUE("API: Rel Task %d\n", taskId);
+    DBG_VALUE("API: Rel Task %d\n", taskId);
 
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
@@ -146,7 +146,7 @@ uint32_t DDS_ReleaseTask(uint32_t taskId)
 */
 uint32_t DDS_CompleteTask(uint32_t taskId)
 {
-    DBG_TRACE_VALUE("API: Compl. Task %d\n", taskId);
+    DBG_VALUE("API: Compl. Task %d\n", taskId);
 
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
@@ -274,7 +274,7 @@ uint32_t DDS_Init()
                 "_DDS_TBGen",
                 configMINIMAL_STACK_SIZE,
                 NULL,
-				DDS_MON_PR,
+                            DDS_MON_PR,
                 NULL);
 #endif // DDS_TESTING
 

@@ -16,16 +16,21 @@
 // ___  ___  ____    ____ ____ _  _ ____ ____ ____ _
 // |  \ |  \ [__     | __ |___ |\ | |___ |__/ |__| |
 // |__/ |__/ ___]    |__] |___ | \| |___ |  \ |  | |___
+//
 /**********************************************************************/
-#define DDS_STM_TIMER               (TIM2)
 #define DDS_ENABLE_MONITOR          (1)
+#define DDS_TESTING                 (1)
+
+#define DDS_STM_TIMER               (TIM2)
+#define CNT_TICKS_TO_MS             1.276 // 1.5604
+#define DDS_MS_TICKS(TIME_MS)       ((uint32_t)((float) (TIME_MS / 1.276)))
 
 #define MAX_DDS_TASKS               (10U)
 #define TASK_LOWEST_PR              (tskIDLE_PRIORITY + 1U)
 #define DD_TASK_START_PR            (TASK_LOWEST_PR)
 
-#define DDS_SCHD_PR                 (TASK_LOWEST_PR + MAX_DDS_TASKS)
-#define DDS_MON_PR                  (DDS_SCHD_PR - 1U)
+#define DDS_MON_PR                  (TASK_LOWEST_PR + MAX_DDS_TASKS)
+#define DDS_SCHD_PR                 (DDS_MON_PR + 1U)
 #define DDS_MAX_T_PR                (DDS_MON_PR - 1U)
 
 #define MAX_WAIT                    0xffffffffUL
@@ -47,7 +52,6 @@ extern EventGroupHandle_t xEVT_DDScheduler;
 // |  \ |  \ [__     |\/| |___ [__  [__  |__| | __ |___
 // |__/ |__/ ___]    |  | |___ ___] ___] |  | |__] |___
 **********************************************************************/
-
 typedef enum
 {
     DDCMD_CREATE = 1,
@@ -74,7 +78,7 @@ typedef struct
     void *              pPayload;
 } dds_Message_t;
 
-#define DDS_Q_LEN       (20)
+#define DDS_Q_LEN       (3)
 #define DDS_Q_ITEMSIZE  (sizeof(dds_Message_t))
 
 extern xQueueHandle     xQ_DDSCommandQ;
@@ -105,7 +109,7 @@ typedef struct dds_TaskHandle_s
             uint32_t deadline   : 16;
             uint32_t period     : 16;
         }; 
-        uint32_t HeaderBits: 
+        uint64_t HeaderBits;
     };
 
     TaskHandle_t         tHandle;
@@ -128,7 +132,5 @@ typedef struct dds_TaskHandle_s
 void _DDS_Scheduler(void *pvParameters);
 void _DDS_Monitor(void *pvParameters);
 void  TIM_DDS_Period_cb(xTimerHandle xTimer);
-
-
 
 #endif /* DDS_DDS_PRIVATE_H_ */

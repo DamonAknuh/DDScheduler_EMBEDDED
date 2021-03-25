@@ -27,14 +27,14 @@
 
 #if (ENABLE_DEBUG_BUILD)
 
-#define DBG_printf(format, ...)    \
+#define DBG_VALUE(format, ...)    \
     do                                  \
     {                                   \
         printf(format, __VA_ARGS__); \
     }                                   \
     while(0)
 
-#define DBG_printf_s(string)    \
+#define DBG_LINE(string)    \
     do                                  \
     {                                   \
         printf(string);                    \
@@ -43,7 +43,8 @@
 
 #else
 
-#define DBG_printf(format, ...)
+#define DBG_VALUE(format, ...) 
+#define DBG_LINE(string) 
 
 #endif // ENABLE_DEBUG_BUILD
 

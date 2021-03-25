@@ -61,7 +61,7 @@ void _DDS_TBTaskFunction(void *pvParameters)
 
 void _DDS_TBTaskGenerator(void *pvParameters)
 {
-	DBG_TRACE_VALUE("==> Starting the DDS Testbench %u\n", DDS_TEST_BENCH);
+	DBG_VALUE("==> Starting the DDS Testbench %u\n", DDS_TEST_BENCH);
 
 	for(uint32_t i = 0; i < TB_TASK_NUM; i++)
 	{

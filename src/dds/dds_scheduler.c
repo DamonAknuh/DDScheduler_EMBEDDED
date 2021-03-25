@@ -9,6 +9,13 @@
 #include "dds_api.h"
 #include "dds_private.h"
 
+/**********************************************************************/
+// ____ ___ ____ ___ _ ____    ____ ___ ____ _  _ ____ ___ 
+// [__   |  |__|  |  | |       [__   |  |__/ |  | |     |  
+// ___]  |  |  |  |  | |___    ___]  |  |  \ |__| |___  |  
+// 
+/**********************************************************************/
+
 EventGroupHandle_t xEVT_DDScheduler;
 xQueueHandle       xQ_DDSCommandQ;
 
@@ -18,9 +25,17 @@ dds_TaskHandle_t * dds_ReadyTaskList;
 dds_TaskHandle_t * dds_CompletedTaskList;
 dds_TaskHandle_t * dds_OverdueTaskList;
 
+/**********************************************************************/
+// ___  ____ _ _  _ ____ ___ ____    ____ _  _ _  _ ____  
+// |__] |__/ | |  | |__|  |  |___    |___ |  | |\ | |     
+// |    |  \ |  \/  |  |  |  |___    |    |__| | \| |___ .
+//
+/**********************************************************************/
+
 void _DDS_TaskBootStrap(void *pvParameters);
 static void _DDS_HandleMSG();
 static void _DDS_SortTasksEDF();
+static void _DDS_PrioritizeTasks();
 static void _DDS_AddTaskCompletedList(dds_TaskHandle_t * pTaskHandle,  
                                     dds_TaskHandle_t ** pplistHead);
 static void _DDS_AddTaskToReadyList(dds_TaskHandle_t * pTaskHandle,  
@@ -32,6 +47,12 @@ static void _DDS_InitializeTaskNode(uint32_t taskId,
                                     dds_TaskType_e taskType,
                                     uint32_t deadline);
 
+/**********************************************************************/
+// ___  ___  ____    ___ ____ ____ _  _ 
+// |  \ |  \ [__      |  |__| [__  |_/  
+// |__/ |__/ ___]     |  |  | ___] | \_ 
+//
+/**********************************************************************/
 void _DDS_Scheduler(void *pvParameters)
 {
     EventBits_t evtBits;
@@ -40,10 +61,10 @@ void _DDS_Scheduler(void *pvParameters)
 
     while(1)
     {
-        DBG_LINE("DDS:  Waiting for Event\n");
+        DBG_LINE("\nDDS: Waiting for Event\n");
         // ==> task waits for the light timer callback to finish and assert next state.
         evtBits = xEventGroupWaitBits(xEVT_DDScheduler,
-                    DDS_MESSAGE | DDS_SCHEDULING,
+                    (DDS_MESSAGE | DDS_SORTING | DDS_SCHEDULING),
                     pdTRUE,
                     pdFALSE,
                     MAX_WAIT);
@@ -68,6 +89,14 @@ void _DDS_Scheduler(void *pvParameters)
     printf("DDS: Deadline Driven Scheduler Task Ended\n");
 }
 
+/**********************************************************************/
+// _  _ ____ ____    _  _ ____ _  _ ___  _    ____ ____ 
+// |\/| [__  | __    |__| |__| |\ | |  \ |    |___ |__/ 
+// |  | ___] |__]    |  | |  | | \| |__/ |___ |___ |  \ 
+//
+/**********************************************************************/
+
+
 void _DDS_HandleMSG()
 {
     dds_CreateMsg_t * pDataPayload;
@@ -90,7 +119,7 @@ void _DDS_HandleMSG()
                                     pDataPayload->taskFunc,
                                     pDataPayload->taskType,
                                     pDataPayload->deadline);
-            xEventGroupSetBits(dds_TaskList[taskId].taskEvt,
+            xEventGroupSetBits(dds_TaskList[pDataPayload->taskId].taskEvt,
                                     READY);
 
             // ==> Trigger Scheduler to run as task lists have changed.
@@ -134,7 +163,9 @@ void _DDS_HandleMSG()
         }
         else if (rXCommandID == DDCMD_COMPLETE)
         {
-            DBG_LINE("DDS: CMD: DDCMD_COMPLETE");
+            DBG_LINE("DDS: CMD: DDCMD_COMPLETE\n");
+
+            taskId =  *(uint32_t *)rXMessage.pPayload;
 
             dds_TaskList[taskId].tState = COMPLETED;
             dds_TaskList[taskId].CTime  = TIM_GetCounter(DDS_STM_TIMER);
@@ -150,7 +181,7 @@ void _DDS_HandleMSG()
             DBG_LINE("DDS: CMD: DDCMD_GET_ACTIVE\n");
 
             // ==> Store the head of the Active tasks in the payload
-            rXMessage.pPayload = dds_ActiveTaskList;
+            rXMessage.pPayload = dds_ReadyTaskList;
         }
         else if (rXCommandID == DDCMD_GET_COMPL)
         {
@@ -172,21 +203,27 @@ void _DDS_HandleMSG()
     }
 }
 
+/**********************************************************************/
+// ___ ____ ____ _  _    ____ ____ ____ ___ 
+//  |  |__| [__  |_/     [__  |  | |__/  |  
+//  |  |  | ___] | \_    ___] |__| |  \  |  
+//
+/**********************************************************************/
+
 
 void _DDS_SortTasksEDF()
 {
     DBG_LINE("DDS: Sorting Tasks\n");
-    uint8_t priority = 0;
     uint8_t taskState; 
 
     dds_ReadyTaskList        = NULL;
     dds_CompletedTaskList    = NULL;
     dds_OverdueTaskList      = NULL;
 
-    for ( uint8_t i = 0; i < MAX_DDS_TASKS; i ++)
+    for (uint8_t i = 0; i < MAX_DDS_TASKS; i ++)
     {
         taskState = dds_TaskList[i].tState; 
-        else if (taskState & COMPLETED)
+        if (taskState & COMPLETED)
         {
             _DDS_AddTaskCompletedList(&dds_TaskList[i], &(dds_CompletedTaskList));
         }
@@ -201,6 +238,12 @@ void _DDS_SortTasksEDF()
     }
 }
 
+/**********************************************************************/
+// ___ ____ ____ _  _    ___  ____ _ ____ ____ _ ___ _ ___  ____ 
+//  |  |__| [__  |_/     |__] |__/ | |  | |__/ |  |  |   /  |___ 
+//  |  |  | ___] | \_    |    |  \ | |__| |  \ |  |  |  /__ |___ 
+//
+/**********************************************************************/
 
 void _DDS_PrioritizeTasks()
 {
@@ -214,6 +257,7 @@ void _DDS_PrioritizeTasks()
         tempNode = dds_OverdueTaskList;
         while(tempNode != NULL && (priority > 0))
         {
+            DBG_VALUE("  DDS: OT%u P%u\n", tempNode->taskId, priority);
             vTaskPrioritySet(tempNode->tHandle, priority);
 
             tempNode = tempNode->next;
@@ -224,27 +268,37 @@ void _DDS_PrioritizeTasks()
 
     if(NULL != dds_ReadyTaskList)
     {
-        tempNode = dds_OverdueTaskList;
+        tempNode = dds_ReadyTaskList;
 
         while(tempNode != NULL && (priority > 0))
         {
+            DBG_VALUE("  DDS: RT%u P%u %u\n", tempNode->taskId, priority, configMAX_PRIORITIES);
             vTaskPrioritySet(tempNode->tHandle, priority);
-
             tempNode = tempNode->next;
             priority--;
         }
     }
 }
 
+/**********************************************************************/
+// ____ ____ _    _    ___  ____ ____ _  _ ____ 
+// |    |__| |    |    |__] |__| |    |_/  [__  
+// |___ |  | |___ |___ |__] |  | |___ | \_ ___] 
+//
+/**********************************************************************/
+
 void TIM_DDS_Period_cb(xTimerHandle xTimer)
 {
-    uint8_t taskId = (uint8_t ) pvTimerGetTimerID(xTimer);
+    uint32_t taskId = (uint32_t )pvTimerGetTimerID(xTimer);
 
     // ==> Task is either running currently, or is already tagged overdue
     if( dds_TaskList[taskId].tState & (READY | OVERDUE))
     {
+        DBG_VALUE("==> TASK %u OD\n", taskId);
         dds_TaskList[taskId].tState = OVERDUE; 
-
+        xEventGroupSetBits(dds_TaskList[taskId].taskEvt,
+                                OVERDUE);
+        xEventGroupSetBits(xEVT_DDScheduler,  (DDS_SORTING | DDS_SCHEDULING));
     }
     // ==> check if task is periodic and needs to be released again. 
     else if (dds_TaskList[taskId].type == PERIODIC)
@@ -273,9 +327,9 @@ void _DDS_TaskBootStrap(void *pvParameters)
         }
         else if (evtBits & ( READY | OVERDUE))
         {
-            DBG_TRACE_VALUE("TASK: Starting Task: %d\n", taskId);
+            DBG_VALUE("TASK: Starting Task: %d\n", taskId);
 
-            tContext.tFunc((void *) 1);
+            tContext.tFunc((void *) taskId);
 
             DDS_CompleteTask(taskId);
         }
@@ -293,6 +347,12 @@ void _DDS_TaskBootStrap(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+/**********************************************************************/
+// _  _ ___ _ _    _ ___ _   _    ____ _  _ _  _ ____ ___ _ ____ _  _ ____ 
+// |  |  |  | |    |  |   \_/     |___ |  | |\ | |     |  | |  | |\ | [__  
+// |__|  |  | |___ |  |    |      |    |__| | \| |___  |  | |__| | \| ___] 
+//
+/**********************************************************************/
 
 
 void _DDS_InitializeTaskNode(uint32_t taskId,
@@ -304,7 +364,7 @@ void _DDS_InitializeTaskNode(uint32_t taskId,
     {
         dds_TaskList[taskId].taskId  = taskId;
         dds_TaskList[taskId].tState  = READY;
-        dds_TaskList[taskId].deadline= deadline;
+        dds_TaskList[taskId].deadline= DDS_MS_TICKS(deadline);
         dds_TaskList[taskId].type    = taskType;
         dds_TaskList[taskId].next    = NULL;
         dds_TaskList[taskId].RTime   = TIM_GetCounter(DDS_STM_TIMER);
@@ -323,6 +383,8 @@ void _DDS_InitializeTaskNode(uint32_t taskId,
                                                 (taskType == PERIODIC),
                                                 (void *) taskId,
                                                 TIM_DDS_Period_cb);
+
+        xTimerStart(dds_TaskList[taskId].TIMHandle, NO_WAIT);
     }
     else
     {
@@ -450,7 +512,6 @@ void _DDS_AddTaskCompletedList(dds_TaskHandle_t * pTaskHandle,
                         dds_TaskHandle_t ** pplistHead)
 {
     dds_TaskHandle_t * curNode = (*pplistHead);
-    dds_TaskHandle_t * nextNode;
     pTaskHandle->next = NULL;
 
     if (curNode != NULL)
