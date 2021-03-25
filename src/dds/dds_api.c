@@ -36,7 +36,6 @@ uint32_t _DDS_SendAndWait(dds_Message_t *  pMsg)
     // ==> Push message into the queue for DDS to process
     if (pdTRUE == xQueueSend(xQ_DDSCommandQ, pMsg, MAX_WAIT))
     {
-
         // ==> Signal to the DDS scheduler that there is a message waiting
         xEventGroupSetBits(xEVT_DDScheduler, DDS_MESSAGE);
 
@@ -227,6 +226,20 @@ uint32_t DDS_Init()
 {
 
     printf("API: Initializing DDS\n");
+
+    // ENABLE DDS TIMER
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    TIM_TimeBaseInitTypeDef TIM2_InitStructure;
+
+    TIM_TimeBaseStructInit(&TIM2_InitStructure);
+
+    TIM2_InitStructure.TIM_Prescaler            = 0xFFFF;
+    TIM2_InitStructure.TIM_CounterMode          = TIM_CounterMode_Up;
+    TIM2_InitStructure.TIM_Period               = 0xFFFFFFFF;
+   
+    TIM_TimeBaseInit(DDS_STM_TIMER, &TIM6_InitStructure);
+
+    TIM_Cmd(DDS_STM_TIMER, ENABLE);
 
     // Create Event Groups for processing commands coming into the scheduler
     xEVT_DDScheduler = xEventGroupCreate();

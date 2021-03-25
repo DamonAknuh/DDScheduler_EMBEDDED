@@ -17,7 +17,7 @@
 // |  \ |  \ [__     | __ |___ |\ | |___ |__/ |__| |
 // |__/ |__/ ___]    |__] |___ | \| |___ |  \ |  | |___
 /**********************************************************************/
-
+#define DDS_STM_TIMER               (TIM2)
 #define DDS_ENABLE_MONITOR          (1)
 
 #define MAX_DDS_TASKS               (10U)
@@ -25,7 +25,8 @@
 #define DD_TASK_START_PR            (TASK_LOWEST_PR)
 
 #define DDS_SCHD_PR                 (TASK_LOWEST_PR + MAX_DDS_TASKS)
-#define DDS_MON_PR                  (DDS_SCHD_PR - 1)
+#define DDS_MON_PR                  (DDS_SCHD_PR - 1U)
+#define DDS_MAX_T_PR                (DDS_MON_PR - 1U)
 
 #define MAX_WAIT                    0xffffffffUL
 #define NO_WAIT                     0x0UL
@@ -35,6 +36,7 @@ typedef enum
 {
     DDS_MESSAGE         = 0b00000001,
     DDS_SCHEDULING      = 0b00000010,
+    DDS_SORTING         = 0b00000100,
 } dds_EventType_e;
 
 extern EventGroupHandle_t xEVT_DDScheduler;
@@ -84,24 +86,35 @@ extern xQueueHandle     xQ_DDSCommandQ;
 /**********************************************************************/
 typedef enum
 {
-    DEAD        = 0b0001,
-    READY        = 0b0010,
-    COMPLETED   = 0b0100,
-    OVERDUE        = 0b1000,
+    DEAD            = 0b0001,
+    READY           = 0b0010,
+    COMPLETED       = 0b0100,
+    OVERDUE         = 0b1000,
 } dds_TaskStates_e;
 
 typedef struct dds_TaskHandle_s
 {
-    uint32_t             ID;
+    union 
+    {
+        struct 
+        {
+            uint32_t taskId     : 8;
+            uint32_t tState     : 8;
+            uint32_t resv       : 8;
+            uint32_t type       : 8;
+            uint32_t deadline   : 16;
+            uint32_t period     : 16;
+        }; 
+        uint32_t HeaderBits: 
+    };
+
     TaskHandle_t         tHandle;
     TaskFunction_t       tFunc;
     uint32_t             RTime;
     uint32_t             CTime;
-    uint32_t             deadline;
-    EventGroupHandle_t    taskEvt;
+
+    EventGroupHandle_t   taskEvt;
     xTimerHandle         TIMHandle;
-    dds_TaskType_e       type;
-    dds_TaskStates_e     tState;
 
     struct dds_TaskHandle_s * next;
 } dds_TaskHandle_t;
