@@ -23,7 +23,9 @@
 
 #define DDS_STM_TIMER               (TIM2)
 #define CNT_TICKS_TO_MS             1.276 // 1.5604
-#define DDS_MS_TICKS(TIME_MS)       ((uint32_t)((float) (TIME_MS / 1.276)))
+
+#define DDS_TICKS_2_MS(TIME_TK)       ((uint32_t)((float) (TIME_TK * 1.276)))
+#define DDS_MS_2_TICKS(TIME_MS)       ((uint32_t)((float) (TIME_MS / 1.276)))
 
 #define MAX_DDS_TASKS               (10U)
 #define TASK_LOWEST_PR              (tskIDLE_PRIORITY + 1U)
@@ -36,6 +38,7 @@
 #define MAX_WAIT                    0xffffffffUL
 #define NO_WAIT                     0x0UL
 #define DDS_RESULT_WAIT             (pdMS_TO_TICKS(500))
+#define DDS_MON_WAIT_MS             (50)
 
 typedef enum
 {

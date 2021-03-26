@@ -65,20 +65,20 @@ uint32_t DDS_CompleteTask(uint32_t taskId);
 * DESC: This function sends a message to a queue requesting the Active Task List from the DDS. Once a
 *       response is received from the DDS, the function returns the list.
 */
-uint32_t DDS_GetActiveTasks();
+uint32_t DDS_GetActiveTasks(void ** listHead);
 
 /**************************************************************************************
 * DESC: This function sends a message to a queue requesting the Completed Task List from the DDS. Once
 *       a response is received from the DDS, the function returns the list.
 */
-uint32_t DDS_GetCompletedTasks();
+uint32_t DDS_GetCompletedTasks(void ** listHead);
 
 
 /**************************************************************************************
 * DESC: This function sends a message to a queue requesting the Overdue Task List from the DDS. Once a
 *       response is received from the DDS, the function returns the list.
 */
-uint32_t DDS_GetOverdueTasks();
+uint32_t DDS_GetOverdueTasks(void ** listHead);
 
 
 

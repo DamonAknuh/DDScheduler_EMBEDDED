@@ -364,7 +364,7 @@ void _DDS_InitializeTaskNode(uint32_t taskId,
     {
         dds_TaskList[taskId].taskId  = taskId;
         dds_TaskList[taskId].tState  = READY;
-        dds_TaskList[taskId].deadline= DDS_MS_TICKS(deadline);
+        dds_TaskList[taskId].deadline= DDS_MS_2_TICKS(deadline);
         dds_TaskList[taskId].type    = taskType;
         dds_TaskList[taskId].next    = NULL;
         dds_TaskList[taskId].RTime   = TIM_GetCounter(DDS_STM_TIMER);
