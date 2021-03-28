@@ -5,8 +5,9 @@
  *      Author: damonaknuh
  */
 
-
+#include "sys_project.h"
 #include "dds_testing.h"
+#define  DDS_TEST_BENCH     (2)
 
 #if DDS_TEST_BENCH == 1
 
@@ -16,7 +17,7 @@ const uint32_t testBench [TB_TASK_NUM][4] =
 // T_ID         T_TYP           PERIOD      EXEC
     {1,         PERIODIC,        500,        95},
     {2,         PERIODIC,        500,        150},
-    {3,         PERIODIC,        750,        750}
+    {3,         PERIODIC,        750,        250}
 };
 
 #elif DDS_TEST_BENCH == 2
@@ -27,7 +28,7 @@ const uint32_t testBench [TB_TASK_NUM][4] =
 // T_ID         T_TYPE          PERIOD      EXEC
     {1,         PERIODIC,       250,        95},
     {2,         PERIODIC,       500,        150},
-    {3,         PERIODIC,       750,        750}
+    {3,         PERIODIC,       750,        250}
 };
 
 #elif DDS_TEST_BENCH == 3
@@ -50,8 +51,8 @@ void _DDS_TBTaskFunction(void *pvParameters)
     uint32_t  taskExecTime = testBench[taskId-1][3];
 
     for (uint32_t i =0; i < (taskExecTime / 5); i++)
-    {
-        for (uint32_t ii = 0; ii < 64222; ii++)
+    { //64222
+        for (uint32_t ii = 0; ii < 66386; ii++)
         {
             asm("nop");
         }
@@ -61,7 +62,7 @@ void _DDS_TBTaskFunction(void *pvParameters)
 
 void _DDS_TBTaskGenerator(void *pvParameters)
 {
-    DBG_VALUE("==> Starting the DDS Testbench %u\n", DDS_TEST_BENCH);
+    DBG_VALUE(2, "==> Starting the DDS Testbench %u\n", DDS_TEST_BENCH);
 
     for(uint32_t i = 0; i < TB_TASK_NUM; i++)
     {

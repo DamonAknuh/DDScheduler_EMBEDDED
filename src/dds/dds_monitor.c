@@ -10,14 +10,15 @@
 #include "dds_private.h"
 
 
-uint8_t _DDS_CountList(void ** listHead)
+uint8_t _DDS_CountList(void ** pListHead)
 {
     uint8_t numberOfNodes = 0; 
+    dds_TaskHandle_t * listHead = (*pListHead);
     dds_TaskHandle_t * tempNode;
 
-    if (NULL != (*listHead))
+    if (NULL != listHead)
     {
-        tempNode = (*listHead);
+        tempNode = listHead;
 
         while(tempNode != NULL)
         {
@@ -31,20 +32,20 @@ uint8_t _DDS_CountList(void ** listHead)
 
 void _DDS_Monitor(void *pvParameters)
 {
-    dds_TaskHandle_t * pTempNode;
-    uint32_t          curTime;
-    uint8_t           activeTasks;
-    uint8_t           compTasks;
-    uint8_t           overdueTasks;
+    void * pTempNode = NULL;
+    uint8_t           activeTasks	= 0;
+    uint8_t           compTasks		= 0;
+    uint8_t           overdueTasks	= 0;
+    uint32_t 		  startTime     = xTaskGetTickCount();
     printf("==> Starting DDS Monitor\n");
 
     while(1)
     {
-        TIM_Cmd(DDS_STM_TIMER, DISABLE);
-
-        curTime = TIM_GetCounter(DDS_STM_TIMER);
-        DBG_VALUE("MON: Time: %u", DDS_TICKS_2_MS(curTime));
-
+        xEventGroupWaitBits(xEVT_DDScheduler,
+                    DDS_SORTING,
+                    pdFALSE,
+                    pdFALSE,
+                    MAX_WAIT);
 
         DDS_GetActiveTasks(&pTempNode);
         activeTasks =  _DDS_CountList(&pTempNode);
@@ -55,14 +56,8 @@ void _DDS_Monitor(void *pvParameters)
         DDS_GetOverdueTasks(&pTempNode);
         overdueTasks =  _DDS_CountList(&pTempNode);
 
-        printf("A-Tasks: %u\n
-                C-Tasks: %u\n
-                O-Tasks: %u\n", activeTasks, compTasks, overdueTasks);
-        printf("");
-
-        TIM_Cmd(DDS_STM_TIMER, ENABLE);
-
-        vTaskDelay(pdMS_TO_TICKS(DDS_MON_WAIT_MS));
+        DBG_VALUE(2, "MON: Time: %u\n", pdMS_TO_TICKS(xTaskGetTickCount() - startTime));
+        DBG_VALUE(2, "Active: %u\nCompl.: %u\nOvrDue: %u\n\n", activeTasks, compTasks, overdueTasks);
     }
     printf("==> DDS Monitor Task Ended\n");
 }

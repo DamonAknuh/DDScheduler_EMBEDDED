@@ -42,6 +42,8 @@ uint32_t _DDS_SendAndWait(dds_Message_t *  pMsg)
         // ==> Signal to the DDS scheduler that there is a message waiting
         xEventGroupSetBits(xEVT_DDScheduler, DDS_MESSAGE);
 
+        DBG_LINE(4, "API: Waiting on result.. ");
+
         //DBG_VALUE("==> Event Return %d\n", (uint32_t) pMsg->xReturnEvt);
         // ==> Wait for the DDS scheduler to respond to the message
         if (ddsFAILURE == xEventGroupWaitBits(pMsg->xReturnEvt,
@@ -77,7 +79,7 @@ uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
                         uint32_t        taskId,
                         uint32_t        deadline)
 {
-    DBG_VALUE("API: Creating Task %d\n", taskId);
+    DBG_VALUE(3, "API: Creating Task %d\n", taskId);
 
     uint32_t result     = ddsSUCCESS;
 
@@ -103,7 +105,7 @@ uint32_t DDS_CreateTask(TaskFunction_t  taskFunc,
 */
 uint32_t DDS_DeleteTask(uint32_t taskId)
 {
-    DBG_VALUE("CLI: Deleting Task: %d\n", taskId);
+    DBG_VALUE(3, "CLI: Deleting Task: %d\n", taskId);
 
     uint32_t      result = ddsSUCCESS;
     dds_Message_t msg;
@@ -126,7 +128,7 @@ uint32_t DDS_DeleteTask(uint32_t taskId)
 */
 uint32_t DDS_ReleaseTask(uint32_t taskId)
 {
-    DBG_VALUE("API: Rel Task %d\n", taskId);
+    DBG_VALUE(3, "API: Rel Task %d\n", taskId);
 
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
@@ -146,7 +148,7 @@ uint32_t DDS_ReleaseTask(uint32_t taskId)
 */
 uint32_t DDS_CompleteTask(uint32_t taskId)
 {
-    DBG_VALUE("API: Compl. Task %d\n", taskId);
+    DBG_VALUE(3, "API: Compl. Task %d\n", taskId);
 
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
@@ -164,17 +166,15 @@ uint32_t DDS_CompleteTask(uint32_t taskId)
 *        DDS. Once a response is received from the DDS, the function returns the list.
 * RETURNS: ddsSUCCESS:if function successfull, otherwise ddsFAILURE
 */
-uint32_t DDS_GetActiveTasks(void ** listHead)
+uint32_t DDS_GetActiveTasks(void ** pListHead)
 {
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
 
-    _DDS_InitializeMsg(&msg, NULL, DDCMD_GET_ACTIVE);
+    _DDS_InitializeMsg(&msg, pListHead, DDCMD_GET_ACTIVE);
 
     // ==> Send and wait for a response from the DDS
     result = _DDS_SendAndWait(&msg);
-
-    listHead = msg.pPayload;
 
     return result;
 }
@@ -184,17 +184,15 @@ uint32_t DDS_GetActiveTasks(void ** listHead)
 *       the DDS. Once a response is received from the DDS, the function returns the list.
 * RETURNS: ddsSUCCESS:if function successfull, otherwise ddsFAILURE
 */
-uint32_t DDS_GetCompletedTasks(void ** listHead)
+uint32_t DDS_GetCompletedTasks(void ** pListHead)
 {
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
 
-    _DDS_InitializeMsg(&msg, NULL, DDCMD_GET_COMPL);
+    _DDS_InitializeMsg(&msg, pListHead, DDCMD_GET_COMPL);
 
     // ==> Send and wait for a response from the DDS
     result = _DDS_SendAndWait(&msg);
-
-    listHead = msg.pPayload;
 
     return result;
 }
@@ -205,17 +203,15 @@ uint32_t DDS_GetCompletedTasks(void ** listHead)
 *       the DDS. Once a response is received from the DDS, the function returns the list.
 * RETURNS: ddsSUCCESS:if function successfull, otherwise ddsFAILURE
 */
-uint32_t DDS_GetOverdueTasks(void ** listHead)
+uint32_t DDS_GetOverdueTasks(void ** pListHead)
 {
     uint32_t result = ddsSUCCESS;
     dds_Message_t   msg;
 
-    _DDS_InitializeMsg(&msg, NULL, DDCMD_GET_OVERDUE);
+    _DDS_InitializeMsg(&msg, pListHead, DDCMD_GET_OVERDUE);
 
     // ==> Send and wait for a response from the DDS
     result = _DDS_SendAndWait(&msg);
-
-    listHead = msg.pPayload;
 
     return result;
 }
@@ -229,20 +225,6 @@ uint32_t DDS_Init()
 {
 
     printf("API: Initializing DDS\n");
-
-    // ENABLE DDS TIMER
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    TIM_TimeBaseInitTypeDef TIM2_InitStructure;
-
-    TIM_TimeBaseStructInit(&TIM2_InitStructure);
-
-    TIM2_InitStructure.TIM_Prescaler            = 0xFFFF;
-    TIM2_InitStructure.TIM_CounterMode          = TIM_CounterMode_Up;
-    TIM2_InitStructure.TIM_Period               = 0xFFFFFFFF;
-   
-    TIM_TimeBaseInit(DDS_STM_TIMER, &TIM2_InitStructure);
-
-    TIM_Cmd(DDS_STM_TIMER, ENABLE);
 
     // Create Event Groups for processing commands coming into the scheduler
     xEVT_DDScheduler = xEventGroupCreate();
@@ -259,7 +241,7 @@ uint32_t DDS_Init()
                 NULL);
 
 #if DDS_ENABLE_MONITOR
-    DBG_LINE("API: DDS Monitor Enabled\n");
+    DBG_LINE(2, "API: DDS Monitor Enabled\n");
     xTaskCreate(_DDS_Monitor,
                 "_DDS_Monitor",
                 configMINIMAL_STACK_SIZE,
@@ -269,12 +251,12 @@ uint32_t DDS_Init()
 #endif // DD_ENABLE_MONITOR
 
 #if DDS_TESTING
-    DBG_LINE("API: DDS Testing Enabled\n");
+    DBG_LINE(2, "API: DDS Testing Enabled\n");
     xTaskCreate(_DDS_TBTaskGenerator,
                 "_DDS_TBGen",
                 configMINIMAL_STACK_SIZE,
                 NULL,
-                            DDS_MON_PR,
+				DDS_SCHD_PR,
                 NULL);
 #endif // DDS_TESTING
 

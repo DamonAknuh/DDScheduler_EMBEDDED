@@ -10,7 +10,7 @@
 
 #include "dds/dds_api.h"
 
-#define DDS_TEST_BENCH 	(1)
+
 
 void _DDS_TBTaskGenerator(void *pvParameters);
 
